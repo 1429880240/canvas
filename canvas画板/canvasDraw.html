@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>canvas画板</title>
+		<style type="text/css">
+			body {
+				min-width: 1200px;
+			}
+			
+			.wrap {
+				width: 1160px;
+				margin: 5px auto;
+				box-shadow: 0 0 50px 5px gray;
+			}
+			
+			.toolbar {
+				width: 150px;
+				display: inline-block;
+				vertical-align: top;
+				text-align: center;
+			}
+			
+			.toolbar>p {
+				font-size: 25px;
+				color: red;
+			}
+			
+			.toolbar>span,
+			.toolbar>a {
+				display: inline-block;
+				width: 100px;
+				height: 50px;
+				line-height: 50px;
+				border-radius: 5px;
+				font-size: 18px;
+				margin: 5px;
+				cursor: pointer;
+				transition: 0.5s;
+			}
+			
+			.toolbar>span:hover {
+				background: white;
+				box-shadow: 0 0 3px rgb(0, 120, 255);
+				color: rgb(0, 120, 255);
+			}
+			
+			.orange {
+				background: orange;
+				box-shadow: none;
+				color: white;
+			}
+			
+			.active {
+				background: white;
+				box-shadow: 0 0 3px rgb(0, 120, 255);
+				color: rgb(0, 120, 255);
+			}
+			
+			.toolbar>div {
+				margin-top: 5px;
+				cursor: pointer;
+			}
+			
+			#mc {
+				box-shadow: 0 0 50px 5px gray;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="wrap">
+			<div class="toolbar">
+				<p>Toolbar</p>
+				<span id="sp1" class="active">画曲线</span>
+				<span id="sp2" class="orange">画直线</span>
+				<span id="sp3_1" class="orange">画空心矩形</span>
+				<span id="sp3" class="orange">画矩形</span>
+				<span id="sp4_1" class="orange">画空心圆</span>
+				<span id="sp4" class="orange">画圆</span>
+				<a id="sp5" class="orange">清空</a>
+				<a id="sp6" class="orange">橡皮</a>
+				<div>橡皮粗细 ：<input id="xpcx" type="number" value="30" min="10" /></div>
+				<div>画笔颜色 ： <input id="pencolor" type="color" /></div>
+				<div>画布颜色 ： <input id="drawcolor" type="color" /></div>
+				<div>线条粗细 ：<input id="cx" type="number" value="5" min="1" /></div>
+			</div>
+			<canvas id="mc" width="1000" height="800">
+			您的浏览器不支持canvas,请升级!
+		    </canvas>
+		</div>
+	</body>
+	<script src="jquery-3.2.1.min.js"></script>
+	<script type="text/javascript">
+		//画布颜色初始值白色
+		document.getElementById("drawcolor").value = '#FFFFFF';
+		//画笔颜色初始值黑色
+		document.getElementById("pencolor").value = '#000000';
+		//获取画布功键
+		var mc = document.getElementById('mc');
+		var ctx = mc.getContext('2d');
+
+		var drawcolor; //画布颜色
+		var pencolor; //笔颜色
+		var cuxi; //笔粗细
+		var btntype = 'drawqx'; //按钮属性
+		var startx; //鼠标起始x坐标
+		var starty; //鼠标起始y坐标
+		var endx; //鼠标终点x坐标
+		var endy; //鼠标终点y坐标
+		var endx1; //鼠标终点x坐标
+		var endy1; //鼠标终点y坐标
+		var xpWidth; //橡皮宽度
+		var flag = 1; //空心和实心的切换;
+		//点哪个哪里变白
+		$('span').click(function() {
+			$('span').attr('class', 'orange');
+			$(this).attr('class', 'active');
+		});
+		//按钮的点击事件
+		$('#sp1').click(function() {
+			flag = 1;
+			btntype = 'drawqx';
+		});
+		$('#sp2').click(function() {
+			flag = 0;
+			btntype = 'drawline';
+		});
+		$('#sp3_1').click(function() {
+			flag = 0;
+			btntype = 'drawKrect';
+		});
+		$('#sp3').click(function() {
+			flag = 1;
+			btntype = 'drawrect';
+		});
+		$('#sp4_1').click(function() {
+			flag = 0;
+			btntype = 'drawKcir';
+		});
+		$('#sp4').click(function() {
+			flag = 1;
+			btntype = 'drawcir';
+		});
+		$('#sp5').click(function() {
+			flag = 1;
+			ctx.clearRect(0, 0, 1000, 800);
+		});
+		$('#sp6').click(function() {
+			flag = 1;
+			btntype = 'xiangpi';
+		});
+
+		//画布颜色时时获取，使用document.onmousemove
+		document.onmousemove = function() {
+			//画布颜色
+			drawcolor = $('#drawcolor').val();
+			$('#mc').css({
+				'background': drawcolor,
+			});
+			//画笔颜色
+			pencolor = $('#pencolor').val();
+			//画笔粗细
+			cuxi = $('#cx').val();
+			//橡皮粗细
+			xpWidth = $('#xpcx').val();
+		}
+
+		//防止点击右键出现意想不到而错误
+		mc.oncontextmenu = function() {
+				return false;
+			}
+			//为画布添加鼠标按下事件
+		mc.onmousedown = function() {
+			var e = event || window.event;
+			//获取鼠标起始坐标
+			startx = e.pageX - mc.offsetLeft;
+			starty = e.pageY - mc.offsetTop;
+			ctx.beginPath();
+			ctx.moveTo(startx, starty);
+			//鼠标移动事件
+			if(flag == 1) {
+				mc.onmousemove = function() {
+					var ev = event || window.event;
+					endx = ev.pageX - mc.offsetLeft;
+					endy = ev.pageY - mc.offsetTop;
+					ctx.lineTo(endx, endy);
+					switch(btntype) {
+						case 'drawqx':
+							drawqx();
+							break;
+						case 'drawrect':
+							drawrect();
+							break;
+						case 'drawcir':
+							drawcir();
+							break;
+						case 'xiangpi':
+							xiangpi();
+							break;
+						default:
+					}
+				}
+			} else {
+				mc.onmouseup = function() {
+					var ev1 = event || window.event;
+					endx = ev1.pageX - mc.offsetLeft;
+					endy = ev1.pageY - mc.offsetTop;
+					switch(btntype) {
+						case 'drawline':
+							drawline();
+							break;
+						case 'drawKrect':
+							drawKrect();
+							break;
+						case 'drawKcir':
+							drawKcir();
+							break;
+						default:
+					}
+				}
+			}
+		}
+
+		//鼠标抬起事件，抬起时清除mousemove
+		document.onmouseup = function() {
+			mc.onmousemove = null;
+		}
+
+		//画曲线
+		function drawqx() {
+			ctx.strokeStyle = pencolor;
+			ctx.lineWidth = cuxi;
+			ctx.stroke();
+		}
+		//画直线
+		function drawline() {
+			ctx.beginPath();
+			ctx.strokeStyle = pencolor;
+			ctx.lineWidth = cuxi;
+			ctx.moveTo(startx, starty);
+			ctx.lineTo(endx, endy);
+			ctx.stroke();
+		}
+		//画空心矩形
+		function drawKrect() {
+			ctx.beginPath();
+			ctx.strokeStyle = pencolor;
+			ctx.fillStyle = pencolor;
+			ctx.lineWidth = cuxi;
+			ctx.strokeRect(startx, starty, endx - startx, endy - starty);
+			ctx.stroke();
+		}
+		//画矩形
+		function drawrect() {
+			ctx.beginPath();
+			ctx.fillStyle = pencolor;
+			ctx.fillRect(startx, starty, endx - startx, endy - starty);
+			ctx.fill();
+		}
+		//画空心圆
+		function drawKcir() {
+			ctx.beginPath();
+			var ox = startx + (endx - startx) / 2;
+			var oy = starty + (endy - starty) / 2;
+			var r = Math.sqrt(Math.pow(endx - startx, 2) + Math.pow(endy - starty, 2)) / 2;
+			ctx.lineWidth = cuxi;
+			ctx.strokeStyle = pencolor;
+			ctx.arc(ox, oy, r, 0, Math.PI * 2);
+			ctx.stroke();
+		}
+		//画圆
+		function drawcir() {
+			ctx.beginPath();
+			var ox = startx + (endx - startx) / 2;
+			var oy = starty + (endy - starty) / 2;
+			var r = Math.sqrt(Math.pow(endx - startx, 2) + Math.pow(endy - starty, 2)) / 2;
+			ctx.fillStyle = pencolor;
+			ctx.arc(ox, oy, r, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		//橡皮
+		function xiangpi() {
+			ctx.beginPath();
+			ctx.clearRect(endx - xpWidth / 2, endy - xpWidth / 2, xpWidth, xpWidth);
+		}
+	</script>
+
+</html>
