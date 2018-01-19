@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>飞机大作战</title>
+	</head>
+
+	<body>
+		<canvas id="myCanvas" width="800px" height="800" style="background: black;display: block; margin: 0 auto;">您的浏览器不支持canvas</canvas>
+		<script type="text/javascript">
+			//获取元素
+			var mc = document.getElementById('myCanvas');
+			//获取cnavas功能键
+			var ctx = mc.getContext('2d');
+			//鼠标基于canva画布的x坐标(绘制白色块及子弹)
+			var mouseX = mc.width / 2;
+			//生命初值0;
+			var dieNum = 0;
+			//分数初值0
+			var score = 0;
+			//子弹数组
+			var bulletArr = [];
+			//敌人对象数组
+			var enemyArr = [];
+			//爆炸物数组
+			var boomArr = [];
+			//创建敌人计时器
+			var createEnemyTimer;
+			//创建元素子弹等计时器
+			var eleMoveTimer;
+
+			//随机数
+			function rn(x, y) {
+				return Math.round(Math.random() * (y - x) + x);
+			}
+			//画盒子
+			function drawBox() {
+				//******判断盒子x最小值不能用三目******
+				//判断盒子x值的最大值,不让盒子出去
+				if(mouseX > mc.width - 20) {
+					mouseX = mc.width - 20
+				}
+				//判断盒子x值的最小值
+				if(mouseX < 20) {
+					mouseX = 20
+				}
+				ctx.beginPath();
+				ctx.fillStyle = '#fff';
+				ctx.fillRect(mouseX - 20, 730, 40, 40);
+				ctx.fill();
+			}
+
+			//绘制子弹
+			function Bullet() {
+				this.x = mouseX; //子弹x坐标
+				this.y = 722; //子弹y坐标
+				this.speed = 2; //速度,子弹匀速
+			}
+			Bullet.prototype.move = function() {
+				this.y -= this.speed;
+				ctx.beginPath();
+				ctx.fillStyle = '#fff';
+				ctx.fillRect(this.x - 12, this.y, 8, 8);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.fillStyle = '#fff';
+				ctx.fillRect(this.x + 4, this.y, 8, 8);
+				ctx.fill();
+				//当子弹移出画布时,从数组中删除,减少不必要的循环,出去的子弹是数组中的第一个元素;
+				if(this.y < 0) {
+					bulletArr.shift();
+				}
+			}
+
+			//创建一个子弹
+			function createBullet() {
+				var bullet = new Bullet(); //实例化子弹
+				bulletArr.push(bullet); //将子弹放到子弹数组
+			}
+
+			//Enemy类:掉落块的类
+			//x,y左上角的坐标
+			//vx,vy水平方向和竖直方向移动速度
+			//bc背景色
+			//dis左右摇摆范围
+			function Enemy(x, wh, vx, vy, bc, dis) {
+				this.x = x;
+				this.y = -wh;
+				this.wh = wh;
+				this.vx = vx;
+				this.vy = vy;
+				this.bc = bc;
+				this.left = this.x - dis;
+				this.right = this.x + dis;
+			}
+			Enemy.prototype.move = function() {
+				//当块左右摇摆到达边界反弹
+				if(this.x < this.left || this.x > this.right || this.x < 0 || this.x > mc.width - this.wh) {
+					this.vx *= -1;
+				}
+				//位置变化
+				this.x += this.vx;
+				this.y += this.vy;
+				ctx.beginPath();
+				ctx.fillStyle = this.bc;
+				ctx.fillRect(this.x, this.y, this.wh, this.wh);
+			}
+
+			//实例化enemy对象
+			var minWh = 40,
+				maxWh = 70; //宽高范围
+			var minX = 0,
+				maxX = mc.width - maxWh; //x坐标范围
+			var minVx = -2,
+				maxVx = 3; //x方向速度范围
+			var minVy = 1,
+				maxVy = 3; //y轴方向速度范围
+			var minDis = 50,
+				maxDis = 80; //摆动范围
+			//创造敌人
+			function createEnemy() {
+				var wh = rn(minWh, maxWh);
+				var x = rn(minX, maxX);
+				var vx = rn(minVx, maxVx);
+				var vy = rn(minVy, maxVy);
+				while(vx == 0) {
+					vx = rn(minVx, maxVx);
+				}
+				while(vy == 0) {
+					vy = rn(minVy, maxVy);
+				}
+				var bc = 'rgb(' + rn(50, 255) + ',' + rn(50, 255) + ',' + rn(50, 255) + ')';
+				var dis = rn(minDis, maxDis);
+				//实例化敌人对象
+				var enemy = new Enemy(x, wh, vx, vy, bc, dis);
+				enemyArr.push(enemy);
+			}
+			//判断小块是否移出画布
+			function judgeEnemy() {
+				for(var i = 0; i < enemyArr.length; i++) {
+					if(enemyArr[i].y > mc.height) {
+						enemyArr.splice(i, 1);
+						dieNum++;
+						if(dieNum == 100) {
+							gaveOver();
+						}
+						//移除元素之后结构发生变化,为了防止漏判,让再次执行一次循环
+						i--;
+					}
+				}
+			}
+
+			//判断是否击中
+			function judgeHit() {
+				//子弹
+				for(var i = 0; i < bulletArr.length; i++) {
+					//敌人
+					for(var j = 0; j < enemyArr.length; j++) {
+						var a = bulletArr[i]; //当前子弹
+						var b = enemyArr[j]; //当前敌人
+						if(a.x + 8 > b.x && a.y + 8 > b.y && a.x < b.x + b.wh && a.y < b.y + b.wh) {
+							//分数累加
+							score += 10;
+							//根据被打中块的信息创建爆炸物
+							createBoom(b.x, b.y, b.wh, b.bc);
+							bulletArr.splice(i, 1); //移除子弹
+							enemyArr.splice(j, 1); //移除敌人
+							i--;
+							break;
+						}
+					}
+				}
+			}
+			//爆炸物
+			function Boom(x, y, vx, vy, bc) {
+				this.x = x; //x坐标
+				this.y = y; //y坐标
+				this.vx = vx; //x反向速度
+				this.vy = vy; //y方向速度
+				this.bc = bc; //背景色
+				this.times = 0; //爆炸物的绘制次数(move一次,times++)
+			}
+			Boom.prototype.move = function() {
+				this.x += this.vx;
+				this.y += this.vy;
+				ctx.beginPath();
+				ctx.fillStyle = this.bc;
+				ctx.fillRect(this.x, this.y, 8, 8);
+				ctx.fill();
+				this.times++;
+			}
+
+			//创建爆炸物
+			function createBoom(x, y, wh, bc) {
+				//临时数组,放当前被击中的块产生的那一批爆炸物
+				var nowArr = [];
+				//实例化Boom
+				var num = Math.ceil(wh / 8);
+				for(var i = 0; i < num; i++) {
+					//计算每行y坐标
+					var thisY = y + 8 * i;
+					for(var j = 0; j < num; j++) {
+						//计算每行x坐标
+						var thisX = x + 8 * j;
+						//实例化爆炸物对象
+						var vx = rn(-3, 3);
+						var vy = rn(-2, 3);
+						if(vx == 0 && vy == 0) {
+							vx = -2;
+							vy = 2;
+						}
+						var boom = new Boom(thisX, thisY, vx, vy, bc);
+						nowArr.push(boom);
+					}
+
+				}
+				boomArr.push(nowArr);
+			}
+			//判断爆炸物
+			function judgeBoom() {
+				for(var i = 0; i < boomArr.length; i++) {
+					for(var j = 0; j < boomArr[i].length; j++) {
+						//判断一批爆炸物种移动最慢的是否从画布中移出了
+						var maxTimes = Math.ceil(Math.sqrt(Math.pow(mc.width, 2) + Math.pow(mc.height, 2)));
+						if(boomArr[i][j].times > maxTimes) {
+							boomArr.splice(i, 1);
+							i--;
+							break;
+						}
+					}
+				}
+			}
+
+			//开始页面
+			drawStartPage();
+
+			function drawStartPage() {
+				ctx.beginPath();
+				ctx.font = '60px 宋体';
+				ctx.fillStyle = '#fff';
+				ctx.fillText('✈️飞机大作战', 220, 300);
+
+				ctx.beginPath();
+				ctx.font = '40px 宋体';
+				ctx.fillStyle = 'red';
+				ctx.fillText('✈️点击游戏页面任何位置开始游戏', 110, 350);
+			}
+
+			//分数
+			function drawScore() {
+				ctx.beginPath();
+				ctx.font = '20px Arial';
+				ctx.fillStyle = 'red';
+				ctx.fillText('分数:' + score, 20, 20);
+			}
+
+			//点击事件开关:   0:开始游戏 1:子弹 2:重新游戏
+			var gameFlag = 0;
+			mc.onclick = function() {
+				if(gameFlag == 0) {
+					mc.onmousemove = function() {
+						//ctx.clearRect(0, 0, 800, 800);
+						//计算出鼠标基于canvas的x坐标
+						var e = event || window.event;
+						mouseX = e.clientX - mc.offsetLeft;
+					}
+					gameStart();
+					gameFlag = 1;
+				} else if(gameFlag == 1) {
+					createBullet(); //创建子弹
+				}
+			}
+			mc.onmousewheel = function() {
+				if(gameFlag == 2) {
+					ctx.clearRect(0, 0, 800, 800);
+					//开始页面
+					drawStartPage();
+					gameFlag = 0;
+				}
+			}
+
+			function gameStart() {
+				//子弹计时器
+				eleMoveTimer = setInterval(function() {
+					//根据重绘频率清除画布
+					ctx.clearRect(0, 0, 800, 800);
+					drawBox();
+					//循环绘制所有子弹
+					for(var i = 0; i < bulletArr.length; i++) {
+						bulletArr[i].move();
+					}
+					for(var j = 0; j < enemyArr.length; j++) {
+						enemyArr[j].move();
+					}
+
+					//绘制爆炸物
+					for(var m = 0; m < boomArr.length; m++) {
+						for(var n = 0; n < boomArr[m].length; n++) {
+							boomArr[m][n].move();
+						}
+					}
+					judgeEnemy();
+					//判断是否击中
+					judgeHit();
+					//判断爆炸物是否移出页面
+					judgeBoom();
+					//绘制分数
+					drawScore();
+
+				}, 6);
+
+				//生成敌人的计时器
+				createEnemyTimer = setInterval(function() {
+					createEnemy();
+				}, 1000);
+			}
+			//游戏结束函数
+			function gaveOver() {
+				clearInterval(eleMoveTimer);
+				clearInterval(createEnemyTimer);
+				//清除画布事件
+				ctx.clearRect(0, 0, 800, 800);
+				//绘制最终分数
+				ctx.beginPath();
+				ctx.font = '50px 宋体';
+				ctx.fillStyle = 'yellow';
+				ctx.fillText('最终分数' + score, 280, 350);
+				ctx.beginPath();
+				ctx.font = '40px 宋体';
+				ctx.fillStyle = 'yellow';
+				ctx.fillText('✈️滑动鼠标滚轮继续', 220, 400);
+				//将分数置0
+				score = 0;
+				dieNum = 0;
+				//子弹数组
+				bulletArr = [];
+				//敌人对象数组
+				enemyArr = [];
+				//爆炸物数组
+				boomArr = [];
+				gameFlag = 2;
+			}
+		</script>
+	</body>
+
+</html>;
