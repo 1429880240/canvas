@@ -142,7 +142,7 @@
 					if(enemyArr[i].y > mc.height) {
 						enemyArr.splice(i, 1);
 						dieNum++;
-						if(dieNum == 100) {
+						if(dieNum == 3) {
 							gaveOver();
 						}
 						//移除元素之后结构发生变化,为了防止漏判,让再次执行一次循环
