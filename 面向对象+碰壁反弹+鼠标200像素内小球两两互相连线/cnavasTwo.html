@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+	<head>
+		<meta charset="UTF-8">
+		<title>面向对象+碰壁反弹+鼠标200像素内小球两两互相连线</title>
+		<style type="text/css">
+			div {
+				text-align: center;
+				font-size: 2.6rem;
+				color: red;
+			}
+		</style>
+	</head>
+
+	<body>
+		<canvas id="myCanvas" width="1000px" height="600" style="background: black;display: block; margin: 0 auto;"></canvas>
+		<div>面向对象+碰壁反弹+鼠标200像素内小球两两互相连线</div>
+		<script type="text/javascript">
+			var mc = document.getElementById("myCanvas");
+			var ctx = mc.getContext("2d");
+			var minX = 5,
+				maxX = mc.width - 5;
+			var minY = 5,
+				maxY = mc.height - 5;
+			var minR = 3,
+				maxR = 5;
+			var minVX = -5,
+				maxVX = 5;
+			var minVY = -3,
+				maxVY = 3;
+			var mousePoint = {
+				x: -1,
+				y: -1
+			}
+
+			function roundNum(x, y) {
+				return Math.round(Math.random() * (y - x) + x);
+			}
+			//封装小球类
+			/*Ball():小球类
+			 * x,y:小球圆心坐标
+			 * r:小球半径
+			 * bgColor:小球颜色
+			 * vx,vy:水平方向和竖直方向的速度
+			 */
+			function Ball(x, y, r, bgColor, vx, vy) {
+				this.x = x;
+				this.y = y;
+				this.r = r;
+				this.bgColor = bgColor;
+				this.vx = vx;
+				this.vy = vy;
+			}
+			//Ball的原型方法:碰壁反弹
+			Ball.prototype.draw = function() {
+				//碰壁速度置负
+				if(this.x < this.r || this.x > mc.width - this.r) {
+					this.vx = -this.vx; //this.vx*=-1;
+				}
+				if(this.y < this.r || this.y > mc.height - this.r) {
+					this.vy = -this.vy; //this.vy*=-1;
+				}
+				//改变圆心的位置
+				this.x += this.vx;
+				this.y += this.vy;
+				//绘制
+				ctx.beginPath();
+				ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+				ctx.fillStyle = this.bgColor;
+				ctx.fill();
+			}
+
+			var ballArr = [];
+			//实例化小球
+			function createBall() {
+				var x = roundNum(minX, maxX);
+				var y = roundNum(minY, maxY);
+				var bgColor = 'rgba(' + roundNum(30, 255) + ',' + roundNum(30, 255) + ',' + roundNum(30, 255) + ',' + roundNum(0.6, 0.8) +
+					')';
+				var r = roundNum(minR, maxR)
+				var vx = roundNum(minVX, maxVX);
+				if(vx == 0) {
+					vx += 1;
+				}
+				var vy = roundNum(minVY, maxVY);
+				if(vy == 0) {
+					vy -= 1;
+				}
+				var newBall = new Ball(x, y, r, bgColor, vx, vy);
+				//				newBall.draw();
+				ballArr.push(newBall);
+			}
+
+			for(var i = 0; i < 200; i++) {
+				createBall();
+			}
+			console.log(ballArr);
+			setInterval(function() {
+				ctx.clearRect(0, 0, 1000, 600);
+				for(var i = 0; i < ballArr.length; i++) {
+					ballArr[i].draw();
+				}
+				var arr1 = getCloseMouseBall();
+				drawLine(arr1);
+			}, 10);
+			//为canavs绑定鼠标移动事件
+			mc.onmousemove = function() {
+					var e = event || window.event; //获取鼠标基于canvas的坐标
+					var mouseX = e.clientX - mc.offsetLeft;
+					var mouseY = e.clientY - mc.offsetTop;
+					mousePoint = {
+						x: mouseX,
+						y: mouseY
+					}
+				}
+				//获取离鼠标规定位置的小球数组
+
+			function getCloseMouseBall() {
+				var closeMouseBall = [];
+				for(var i = 0; i < ballArr.length; i++) {
+					//计算满足距离条件的小球,放入新数组;
+					var dis = Math.sqrt(Math.pow(ballArr[i].x - mousePoint.x, 2) + Math.pow(ballArr[i].y - mousePoint.y, 2));
+					if(dis <= 150) {
+						closeMouseBall.push(ballArr[i]);
+					}
+				}
+				return closeMouseBall;
+			}
+
+			function drawLine(arr) {
+				if(mousePoint.x > 0) {
+					for(var i = 0; i < arr.length - 1; i++) {
+						for(var j = i + 1; j < arr.length; j++) {
+							ctx.beginPath();
+							ctx.moveTo(arr[i].x, arr[i].y);
+							ctx.lineTo(arr[j].x, arr[j].y);
+							ctx.strokeStyle = 'white';
+							ctx.stroke();
+						}
+					}
+				}
+			}
+		</script>
+	</body>
+
+</html>;

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+	<head>
+		<meta charset="UTF-8">
+		<title>canvas时钟</title>
+		<style type="text/css">
+			body {
+				background: black;
+			}
+			
+			#myCanvas {
+				display: block;
+				margin: 200px auto;
+				background: black;
+			}
+		</style>
+	</head>
+
+	<body>
+		<canvas id="myCanvas" width="400" height="400">您的浏览器不支持canvas</canvas>
+		<script type="text/javascript">
+			//获取元素
+			var myCanvas = document.getElementById('myCanvas');
+			//获取画板以及cnavas功能键
+			var ctx = myCanvas.getContext('2d');
+			//半径
+			var r = 150;
+			//将canvas的中心点移到canvas画布正中间
+			ctx.translate(200, 200); //绘制表盘
+
+			function drawBg() {
+				//开启路径
+				ctx.beginPath();
+				ctx.lineWidth = 10;
+				ctx.strokeStyle = 'white';
+				//画圆
+				ctx.arc(0, 0, r, 0, 2 * Math.PI);
+				ctx.stroke();
+				//绘制刻度点
+				for(var i = 0; i < 60; i++) {
+					var rad = 2 * Math.PI / 60 * i; //计算每个小点的圆心角
+					var x = Math.cos(rad) * (r - 15); //计算每个小点的x坐标值
+					var y = Math.sin(rad) * (r - 15); //计算每个小点的y坐标值
+					//绘制小点(5的倍数的小点颜色为黑色，其他为灰色)
+					ctx.beginPath(); //重新开始一条路径
+					if(i % 5 == 0) {
+						ctx.fillStyle = '#fff';
+						ctx.arc(x, y, 2, 0, 2 * Math.PI);
+					} else {
+						ctx.fillStyle = '#ccc';
+						ctx.arc(x, y, 1, 0, 2 * Math.PI);
+					}
+					ctx.fill();
+				}
+				//创建数字
+				var hourNums = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2]; //因为x轴的起始位置是3，所以这个数组以3开始
+				for(var i = 0; i < hourNums.length; i++) {
+					//计算每个数字对应圆心角
+					var rad = 2 * Math.PI / 12 * i;
+					//根据圆心角计算绘制文字的位置
+					var x = Math.cos(rad) * (r - 30);
+					var y = Math.sin(rad) * (r - 30);
+					ctx.beginPath(); //重新开始一条路径
+					ctx.font = '17px 宋体';
+					ctx.fillStyle = '#fff';
+					ctx.textAlign = 'center'; //让字体左右居中
+					ctx.textBaseline = 'middle'; //让字体的基线对其方式为中心对齐
+					ctx.fillText(hourNums[i], x, y); //绘制数字，ctx.fillText(word,x,y);
+				}
+			}
+			//绘制时针
+			function drawHour(hour, minute) {
+				//计算时针旋转角度
+				var hrad = 2 * Math.PI / 12 * hour;
+				var mrad = 2 * Math.PI / 12 / 60 * minute;
+				//为了让每次变化都基于最初的状态,将最初状态保存;
+				ctx.save();
+				ctx.beginPath();
+				ctx.rotate(hrad + mrad);
+				ctx.lineWidth = 6;
+				ctx.lineCap = 'round'; //让线的两端变成圆角
+				ctx.moveTo(0, 10); //起始位置
+				ctx.lineTo(0, -r / 2); //结束位置半径除2
+				ctx.stroke();
+				ctx.restore(); //返回到最初
+			}
+			//绘制分针
+			function drawMinute(minute, second) {
+				ctx.save();
+				var mrad = 2 * Math.PI / 60 * minute;
+				var srad = 2 * Math.PI / 60 / 60 * second;
+				ctx.beginPath();
+				ctx.rotate(mrad + srad);
+				ctx.lineWidth = 4;
+				ctx.lineCap = 'round';
+				ctx.moveTo(0, 12);
+				ctx.lineTo(0, -(r / 2 + 30));
+				ctx.stroke();
+				ctx.restore();
+			}
+
+			//绘制秒针
+			function drawSecond(second) {
+				ctx.save();
+				var srad = 2 * Math.PI / 60 * second;
+				ctx.beginPath();
+				ctx.rotate(srad);
+				ctx.fillStyle = '#f00';
+				ctx.lineCap = 'round';
+				ctx.moveTo(-2, 20);
+				ctx.lineTo(2, 20);
+				ctx.lineTo(1, -(r / 2 + 35));
+				ctx.lineTo(-1, -(r / 2 + 35));
+				ctx.fill();
+				ctx.restore();
+				///绘制中心圆
+				ctx.beginPath();
+				ctx.fillStyle = 'black';
+				ctx.arc(0, 0, 3, 0, 2 * Math.PI);
+				ctx.fill();
+			}
+
+			function clockRotate() {
+				ctx.save();
+				//获取当前时间
+				var nowDate = new Date();
+				var hour = nowDate.getHours();
+				var minute = nowDate.getMinutes();
+				var second = nowDate.getSeconds();
+				//每次绘制之前先清理画布
+				ctx.clearRect(-myCanvas.width / 2, -myCanvas.height / 2, myCanvas.width, myCanvas.height);
+				//绘制钟表
+				drawBg();
+				drawHour(hour, minute);
+				drawMinute(minute, second);
+				drawSecond(second);
+				ctx.restore();
+			}
+			clockRotate();
+			timer = setInterval(clockRotate, 1000);
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+	<head>
+		<meta charset="UTF-8">
+		<title>canvas+面向对象+碰壁反弹+靠近画线+鼠标交互</title>
+		<style type="text/css">
+			div {
+				text-align: center;
+				font-size: 2.6rem;
+				color:red;
+			}
+		</style>
+	</head>
+
+	<body>
+		<canvas id="myCanvas" width="1000px" height="600" style="background: black;display: block; margin: 0 auto;"></canvas>
+		<div>canvas+面向对象+碰壁反弹+靠近画线+鼠标交互,<br />按下鼠标吸住所有小球,松开鼠标小球散开</div>
+		<script type="text/javascript">
+			var mc = document.getElementById("myCanvas");
+			var ctx = mc.getContext("2d");
+
+			function Ball(x, y, r, bgColor, vx, vy) {
+				this.x = x;
+				this.y = y;
+				this.r = r;
+				this.bgColor = bgColor;
+				this.vx = vx;
+				this.vy = vy;
+			}
+			Ball.prototype.draw = function() {
+				//碰壁速度置负
+				if(this.x < this.r || this.x > mc.width - this.r) {
+					this.vx = -this.vx; //this.vx*=-1;
+				}
+				if(this.y < this.r || this.y > mc.height - this.r) {
+					this.vy = -this.vy; //this.vy*=-1;
+				}
+				//改变圆心的位置
+				this.x += this.vx;
+				this.y += this.vy;
+				//绘制
+				ctx.beginPath();
+				ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+				ctx.fillStyle = this.bgColor;
+				ctx.fill();
+			}
+
+			function roundNum(x, y) {
+				return Math.round(Math.random() * (y - x) + x);
+			}
+			var minX = 5,
+				maxX = mc.width - 5;
+			var minY = 5,
+				maxY = mc.height - 5;
+			var minR = 3,
+				maxR = 5;
+			var minVX = -2,
+				maxVX = 2;
+			var minVY = -1,
+				maxVY = 1;
+			var ballArr = [];
+			//实例化一个小球
+			var x;
+			var y;
+
+			function createBall() {
+				x = roundNum(minX, maxX);
+				y = roundNum(minY, maxY);
+				var bgColor = 'rgba(' + roundNum(30, 255) + ',' + roundNum(30, 255) + ',' + roundNum(30, 255) + ',' + roundNum(0.6, 0.8) +
+					')';
+				var r = roundNum(minR, maxR);
+				var vx = roundNum(minVX, maxVX);
+				var vy = roundNum(minVY, maxVY);
+				while(vx == 0) {
+					vx = roundNum(minVX, maxVX)
+				}
+				while(vy == 0) {
+					vy = roundNum(minVY, maxVY);
+				}
+
+				var newBall = new Ball(x, y, r, bgColor, vx, vy);
+				ballArr.push(newBall);
+			}
+			for(var i = 0; i < 200; i++) {
+				createBall();
+			}
+			//计时器
+			setInterval(function() {
+				ctx.clearRect(0, 0, 1000, 600);
+				for(var i = 0; i < ballArr.length; i++) {
+					ballArr[i].draw();
+				}
+				jugeTwoBall();
+				panduanMouse();
+				//获取离鼠标规定200px位置的小球两两连线
+				var arr1 = getCloseMouseBall();
+				drawLine(arr1);
+			}, 20);
+
+			//封装计算两个小球的圆心距
+			function getDis(ball1, ball2) {
+				var dis = Math.sqrt(Math.pow(ball2.x - ball1.x, 2) + Math.pow(ball2.y - ball1.y, 2));
+				if(dis <= 60) {
+					return true;
+				} else {
+					return false;
+				}
+			}
+			//画线
+			function drawLine(ball1, ball2) {
+				ctx.beginPath();
+				ctx.moveTo(ball1.x, ball1.y);
+				ctx.lineTo(ball2.x, ball2.y);
+				ctx.strokeStyle = 'rgba(' + roundNum(30, 255) + ',' + roundNum(30, 255) + ',' + roundNum(30, 255) + ',' + roundNum(0.6, 0.8) +
+					')';
+				ctx.stroke();
+			}
+			//用循环去计算两个小球之间的圆心距
+			function jugeTwoBall() {
+				for(var i = 0; i < ballArr.length - 1; i++) {
+					for(var j = i + 1; j < ballArr.length; j++) {
+						//ballArr[i],ballArr[j]
+						var bol = getDis(ballArr[i], ballArr[j])
+						if(bol) {
+							drawLine(ballArr[i], ballArr[j]);
+						}
+					}
+				}
+			}
+			//鼠标位置对象
+			var mouseObj = {
+				x: -1,
+				y: -1
+			};
+			//为canvas添加鼠标移动事件
+			mc.onmousemove = function() {
+					var e = event || window.event;
+					//获取鼠标基于canvas的坐标
+					var mouseX = e.clientX - mc.offsetLeft;
+					var mouseY = e.clientY - mc.offsetTop;
+					mouseObj = {
+						x: mouseX,
+						y: mouseY
+					}
+				}
+				//判断鼠标和小球的距离
+			function panduanMouse() {
+				//用鼠标坐标和所有的小球做距离的运算
+				for(var i = 0; i < ballArr.length; i++) {
+					var bol = getDis(mouseObj, ballArr[i])
+					if(bol && mouseObj.x > 0) {
+						drawLine(mouseObj, ballArr[i]);
+					}
+				}
+			}
+			mc.onmouseout = function() {
+				mouseObj = {
+					x: -1,
+					y: -1
+				}
+			}
+
+			//************自己加的属性⤵️***********
+
+			var timer;
+			mc.onmousedown = function() {
+				var e1 = event || window.event; //获取鼠标基于canvas的坐标
+				var mouseX = e1.clientX - mc.offsetLeft;
+				var mouseY = e1.clientY - mc.offsetTop;
+				timer = setInterval(function() {
+					for(var i = 0; i < ballArr.length; i++) {
+						var a = mouseX - ballArr[i].x;
+						var b = mouseY - ballArr[i].y;
+						console.log(a, b)
+						ballArr[i].x += a / 5;
+						ballArr[i].y += b / 5;
+					}
+				}, 100)
+
+			}
+			mc.onmouseup = function() {
+
+				for(var i = 0; i < ballArr.length; i++) {
+					ballArr[i].x = roundNum(minX, maxX);
+					ballArr[i].y = roundNum(minY, maxY);
+				}
+
+				clearInterval(timer);
+
+			}
+		</script>
+	</body>
+
+</html>
