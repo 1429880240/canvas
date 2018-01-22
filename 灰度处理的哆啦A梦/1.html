@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>反色的哆啦A梦</title>
+	</head>
+
+	<body>
+		<canvas id="myCanvas" width="1000px" height="600" style="box-shadow: 0 0 50px 5px #000;background:skyblue;display: block; margin: 0 auto;">您的浏览器不支持canvas</canvas>
+		<script type="text/javascript">
+			var mc = document.getElementById('myCanvas');
+			var ctx = mc.getContext('2d');
+			var img = new Image();
+			img.src = '666.jpg';
+			document.getElementsByTagName('body')[0].appendChild(img);
+			//🐍为Image类添加原型方法,将图片添加到canvas画布上;
+			Image.prototype.drawInCanvas = function(x, y, imgWidth, imgHeight, drawCtx) {
+				this.ox = x;
+				this.oy = y;
+				this.width = imgWidth;
+				this.height = imgHeight;
+				this.drawCtx = drawCtx;
+				drawCtx.drawImage(this, x, y, imgWidth, imgHeight);
+				//获取到像素数据
+				this.imgDate = drawCtx.getImageData(this.ox, this.oy, this.width, this.height);
+				this.data = this.imgDate.data;
+			}
+
+			//🐍为Image类添加在canvas上的图做灰度处理
+			Image.prototype.huiduColor = function() {
+				if(this.ox == undefined || this.oy == undefined || this.width == undefined || this.height == undefined || this.imgDate == undefined || this.data == undefined) {
+					alert('没有找到cnavas上的原图片!');
+				} else {
+					for(var i = 0; i < this.data.length; i += 4) {
+						this.data[i] = (this.data[i] + this.data[i + 1] + this.data[i + 2]) / 3;
+						this.data[i + 1] = (this.data[i] + this.data[i + 1] + this.data[i + 2]) / 3;
+						this.data[i + 2] = (this.data[i] + this.data[i + 1] + this.data[i + 2]) / 3;
+					}
+					this.drawCtx.putImageData(this.imgDate, this.ox, this.oy);
+				}
+
+			}
+
+
+			img.onload = function() {
+				img.drawInCanvas(10, 10, 400, 400, ctx);
+				img.huiduColor();
+			}
+		</script>
+	</body>
+
+</html>
