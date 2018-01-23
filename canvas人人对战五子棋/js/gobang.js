@@ -230,7 +230,7 @@ function gameOver(x1, y1, bgColor) {
 //白棋子赢
 function winW() {
 	cxt.beginPath();
-	cxt.fillStyle = 'rgba(46,125,255,0.9)';
+	cxt.fillStyle = 'rgb(239,207,172)';
 	cxt.fillRect(200, 200, 350, 200);
 	cxt.fill();
 	cxt.beginPath();
@@ -244,7 +244,7 @@ function winW() {
 //黑棋子赢
 function winB() {
 	cxt.beginPath();
-	cxt.fillStyle = 'rgba(46,125,255,0.9)';
+	cxt.fillStyle = 'rgb(239,207,172)';
 	cxt.fillRect(200, 200, 350, 200);
 	cxt.fill();
 	cxt.beginPath();
@@ -321,6 +321,7 @@ function back() {
 //开始游戏
 btn1.onclick = function() {
 	gameStart();
+	c.style.background = 'rgba(152,103,53,0.9)';
 }
 
 //重新开始
