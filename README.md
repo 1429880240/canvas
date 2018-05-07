@@ -10,7 +10,7 @@ Learning is my pleasure.
 <hr>
 <a href="https://1429880240.github.io/canvas/灰度处理的哆啦A梦/1.html">5.灰度处理的哆啦A梦</a>
 <hr>
-<a href="https://1429880240.github.io/canvas/canvas钟表/1.html">6.canvasClock.html</a>
+<a href="https://1429880240.github.io/canvas/canvas钟表/canvasClock.html">6.canvas钟表</a>
 <hr>
 <a href="https://1429880240.github.io/canvas/面向对象+碰壁反弹+鼠标200像素内小球两两互相连线/cnavasTwo.html">7.面向对象+碰壁反弹+鼠标200像素内小球两两互相连线</a>
 <hr>
