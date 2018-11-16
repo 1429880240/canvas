@@ -18,6 +18,8 @@ Learning is my pleasure.
 <hr>
 <a href="https://1429880240.github.io/canvas/地区三联动/html/cityselect.html">9.地区三联动</a>
 <hr>
+<a href="https://1429880240.github.io/canvas/浮动文字/index.html">10.九吉公浮动</a>
+<hr>
 
 
 
