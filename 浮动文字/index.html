@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Floating Text</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="css/style.css">
+		<script src="js/jquery/jquery.min.js" type="text/javascript"></script>
+		<style type="text/css">
+			* {
+				margin: 0;
+				padding: 0;
+			}
+
+			html,
+			body {
+				width: 100%;
+				hieght: 100%;
+			}
+
+			#text1 {
+				font-size: 160px;
+			}
+
+			@media screen and (max-width: 600px) {
+				#text1 {
+					font-size: 100px !important;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<article style="width: 100%;hieght:100%;">
+			<p id="text" style="opacity:1;transition: 2s;position: fixed;left: 0;top:0;width: 100%;height:100%;padding: 0;">九吉公以
+				源于古法 手工熬制 为理念 致力于打破现代工业化制糖格局 理清现今消费市场对 红糖 的认知错误 专注继承和发扬中国传统文化的经典 弘扬中国传统红糖文化，促进世代传承的手工传统老红糖回归主流市场
+				九吉公坚守传统手工熬糖工艺 精益求精 做高品质的纯正老红糖 这不仅是为了让广大消费者品尝到真正的温补老红糖 九吉公更肩负着继承中华传统历史文化 传承中华传统手工艺技术 复兴传统老红糖文化的历史使命 苛求品质 坚守古法手工艺熬糖技术
+				这是九吉公坚持在做的事 传承历史 弘扬传统老红糖文化 也是每一个九吉公人同样坚守的信念 </p>
+			<p id="text1" style="font-weight: bolder;color:red;text-shadow:0 0 4px white, -2px -5px 4px #ff3, 2px -10px 6px #fd3, -3px -15px 11px #f80, 3px -25px 18px #f20;opacity: 0;transition: 2s;position: fixed;left: 0;top: calc(50% - 150px);text-align: center;width: 100%;height:300px;line-height:300px;padding: 0;">九吉公</p>
+			<!-- 这个不能去 -->
+			<button id="reset" style="display: none;" data-bound="true"></button>
+		</article>
+
+		<script src="js/index.js"></script>
+
+	</body>
+</html>
+<script type="text/javascript">
+	//定时器
+	setInterval(function() {
+		console.log($("#text")[0].style.opacity)
+		if ($("#text")[0].style.opacity == 1) {
+			$("#text").css("opacity", 0);
+			$("#text1").css("opacity", 1);
+		} else {
+			$("#text").css("opacity", 1);
+			$("#text1").css("opacity", 0);
+		}
+	}, 6000);
+</script>
